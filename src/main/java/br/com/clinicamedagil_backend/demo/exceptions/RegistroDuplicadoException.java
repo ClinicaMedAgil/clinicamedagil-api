@@ -9,7 +9,7 @@ package br.com.clinicamedagil_backend.demo.exceptions;
  *
  * <pre>
  *     History:
- *         09/03/2026 - Christian Fonseca
+ *         09/03/2026 - feature/entidade - Christian Fonseca
  * </pre>
  */
 public class RegistroDuplicadoException extends RuntimeException {

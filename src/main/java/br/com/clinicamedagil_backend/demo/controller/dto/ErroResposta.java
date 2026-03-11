@@ -13,7 +13,7 @@ import java.util.List;
  *
  * <pre>
  *     History:
- *         09/03/2026 - Christian Fonseca
+ *         09/03/2026 - feature/entidade - Christian Fonseca
  * </pre>
  */
 public record ErroResposta(int status , String mensagem, List<ErroCampo> erros) {
