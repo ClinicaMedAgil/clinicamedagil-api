@@ -17,6 +17,18 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * GlobalExcepstionHandler.java
+ *
+ * Classe resposavel por tratar os principais erros
+ *
+ * @author Christian Fonseca - back-end team
+ *
+ * <pre>
+ *     History:
+ *         09/03/2026 - feature/entidade - Christian Fonseca
+ * </pre>
+ */
 @RestControllerAdvice
 @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
 public class GlobalExcepstionHandler {
