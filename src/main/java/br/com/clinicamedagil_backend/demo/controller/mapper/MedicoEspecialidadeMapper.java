@@ -3,6 +3,7 @@ package br.com.clinicamedagil_backend.demo.controller.mapper;
 import br.com.clinicamedagil_backend.demo.controller.dto.MedicoEspecialidadeDTO;
 import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidade;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 /**
  * MedicoEspecialidadeMapper.interface
@@ -18,9 +19,9 @@ import org.mapstruct.Mapper;
  */
 @Mapper(componentModel = "spring")
 public interface MedicoEspecialidadeMapper {
-
+	
     MedicoEspecialidadeDTO toDTO(MedicoEspecialidade entity);
-
+	
     MedicoEspecialidade toEntity(MedicoEspecialidadeDTO dto);
 
 }
