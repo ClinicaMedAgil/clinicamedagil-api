@@ -5,6 +5,8 @@ import br.com.clinicamedagil_backend.demo.controller.mapper.MedicoEspecialidadeM
 import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidade;
 import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidadeId;
 import br.com.clinicamedagil_backend.demo.service.MedicoEspecialidadeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,12 +30,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/clinicamedadil-service/medicoespecialidade")
 @RequiredArgsConstructor
+@Tag(name="MedicosEspecialidades", description="Gerenciamentos de Medicos Especialistas")
 public class MedicoEspecialidadeController {
 
     private final MedicoEspecialidadeService service;
     private final MedicoEspecialidadeMapper mapper;
 
     @GetMapping
+    @Operation(summary="Relação de MedicosEspecialistas", description="Lista Todos Medicos Especialistas")
     public ResponseEntity<List<MedicoEspecialidadeDTO>> listarTodosMedicoEspecialidades() {
         List<MedicoEspecialidadeDTO> lista = service.listarTodos()
                 .stream()
@@ -43,11 +47,13 @@ public class MedicoEspecialidadeController {
     }
 
     @GetMapping
+    @Operation(summary="Pesquisa MedicoEspecialista por Id", description="Localizar Médico Especialista por Id")
     public ResponseEntity<MedicoEspecialidadeDTO> buscarMedicoEspecialidadePorId(@RequestBody @Valid MedicoEspecialidadeId id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
+    @Operation(summary="Cadastra MedicoEspecialista", description="Cadastrar Novo Médico Especialista")
     public ResponseEntity<MedicoEspecialidadeDTO> salvarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeDTO dto) {
         MedicoEspecialidade salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -55,6 +61,7 @@ public class MedicoEspecialidadeController {
 
 
     @DeleteMapping
+    @Operation(summary="Deleta MedicoEspecialista", description="Deletar Médico Especialista Pesquisado por ID")
     public ResponseEntity<Void> deletarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeId id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.List;
 
@@ -23,16 +25,19 @@ import java.util.List;
  *     History:
  *         12/03/2026 - feature/controller -  Christian Fonseca
  * </pre>
+ * http://localhost:8081/swagger-ui/index.html
  */
 @RestController
 @RequestMapping("/clinicamedadil-service/usuarios")
 @RequiredArgsConstructor
+@Tag(name="Usuarios", description="Gerenciamentos de Usuarios")
 public class UsuarioController {
 
     private final UsuarioService service;
     private final UsuarioMapper mapper;
 
     @GetMapping
+    @Operation(summary="Relação de Usuarios", description="Listar Todos Usuarios")
     public ResponseEntity<List<UsuarioDTO>> listarTodosUsuarios() {
         List<UsuarioDTO> lista = service.listarTodos()
                 .stream()
@@ -42,17 +47,20 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary="Pesquisa Usuário pelo Id", description="Localizar Usuário por Id")
     public ResponseEntity<UsuarioDTO> buscarUsuarioPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
+    @Operation(summary="Cadastra Usuario", description="Cadastrar Novo Usuário")
     public ResponseEntity<UsuarioDTO> salvarUsuario(@RequestBody @Valid UsuarioDTO dto) {
         Usuario salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary="Atualiza Usuário", description="Alterar Informações de Usuário já Cadastrado")
     public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long id,
                                                 @RequestBody @Valid UsuarioDTO dto) {
         Usuario atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -60,6 +68,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary="Deleta Usuário", description="Deletar Usuário Pesquisado por ID")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();
