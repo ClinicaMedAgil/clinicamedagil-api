@@ -27,7 +27,7 @@ import java.util.List;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/tiposusuarios")
+@RequestMapping("/clinicamedagil-service/tiposusuarios")
 @RequiredArgsConstructor
 @Tag(name="TiposUsuarios", description="Gerenciamentos de Tipos Usuarios")
 public class TipoUsuarioController {

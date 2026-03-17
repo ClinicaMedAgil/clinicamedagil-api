@@ -27,7 +27,7 @@ import java.util.List;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/perfis")
+@RequestMapping("/clinicamedagil-service/perfis")
 @RequiredArgsConstructor
 @Tag(name="Perfis", description="Gerenciamentos de Perfis")
 public class PerfilController {

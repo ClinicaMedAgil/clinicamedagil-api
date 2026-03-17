@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/niveisacesso")
+@RequestMapping("/clinicamedagil-service/niveisacesso")
 @RequiredArgsConstructor
 @Tag(name="NiveisAcessos", description="Gerenciamentos de Acessos de Usuários")
 public class NivelAcessoController {
