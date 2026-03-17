@@ -28,7 +28,7 @@ import java.util.List;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/medicoespecialidade")
+@RequestMapping("/clinicamedagil-service/medicoespecialidade")
 @RequiredArgsConstructor
 @Tag(name="MedicosEspecialidades", description="Gerenciamentos de Medicos Especialistas")
 public class MedicoEspecialidadeController {
@@ -46,7 +46,7 @@ public class MedicoEspecialidadeController {
         return ResponseEntity.ok(lista);
     }
 
-    @GetMapping
+    @GetMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Pesquisa MedicoEspecialista por Id", description="Localizar Médico Especialista por Id")
     public ResponseEntity<MedicoEspecialidadeDTO> buscarMedicoEspecialidadePorId(@RequestBody @Valid MedicoEspecialidadeId id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
@@ -60,7 +60,7 @@ public class MedicoEspecialidadeController {
     }
 
 
-    @DeleteMapping
+    @DeleteMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Deleta MedicoEspecialista", description="Deletar Médico Especialista Pesquisado por ID")
     public ResponseEntity<Void> deletarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeId id) {
         service.deletar(id);

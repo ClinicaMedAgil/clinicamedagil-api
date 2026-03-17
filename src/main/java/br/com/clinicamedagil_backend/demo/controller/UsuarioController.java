@@ -28,7 +28,7 @@ import java.util.List;
  * http://localhost:8081/swagger-ui/index.html
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/usuarios")
+@RequestMapping("/clinicamedagil-service/usuarios")
 @RequiredArgsConstructor
 @Tag(name="Usuarios", description="Gerenciamentos de Usuarios")
 public class UsuarioController {

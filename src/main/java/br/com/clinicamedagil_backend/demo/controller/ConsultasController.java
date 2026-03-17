@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/consultas")
+@RequestMapping("/clinicamedagil-service/consultas")
 @RequiredArgsConstructor
 @Tag(name="Consultas", description="Gerenciamentos de Consultas")
 public class ConsultasController {

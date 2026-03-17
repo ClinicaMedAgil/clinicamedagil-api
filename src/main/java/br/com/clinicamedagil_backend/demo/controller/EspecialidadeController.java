@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/especialidades")
+@RequestMapping("/clinicamedagil-service/especialidades")
 @RequiredArgsConstructor
 @Tag(name="Especialistas", description="Gerenciamentos de Especialistas")
 public class EspecialidadeController {

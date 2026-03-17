@@ -35,7 +35,7 @@ import lombok.RequiredArgsConstructor;
  * </pre>
  */
 @RestController
-@RequestMapping("/clinicamedadil-service/agendamedicos")
+@RequestMapping("/clinicamedagil-service/agendamedicos")
 @RequiredArgsConstructor
 @Tag(name="AgendaMedicos", description="Gerenciamentos de Agenda Médicos")
 public class AgendaMedicoController {
