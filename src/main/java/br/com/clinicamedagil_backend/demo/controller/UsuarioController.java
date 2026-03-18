@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +39,7 @@ public class UsuarioController {
 
     @GetMapping
     @Operation(summary="Relação de Usuarios", description="Listar Todos Usuarios")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UsuarioDTO>> listarTodosUsuarios() {
         List<UsuarioDTO> lista = service.listarTodos()
                 .stream()
@@ -48,12 +50,14 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Usuário pelo Id", description="Localizar Usuário por Id")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UsuarioDTO> buscarUsuarioPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra Usuario", description="Cadastrar Novo Usuário")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UsuarioDTO> salvarUsuario(@RequestBody @Valid UsuarioDTO dto) {
         Usuario salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -61,6 +65,7 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza Usuário", description="Alterar Informações de Usuário já Cadastrado")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UsuarioDTO> atualizarUsuario(@PathVariable Long id,
                                                 @RequestBody @Valid UsuarioDTO dto) {
         Usuario atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -69,6 +74,7 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta Usuário", description="Deletar Usuário Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarUsuario(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

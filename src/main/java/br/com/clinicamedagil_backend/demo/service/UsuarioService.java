@@ -5,6 +5,7 @@ import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.exceptions.RegistroDuplicadoException;
 import br.com.clinicamedagil_backend.demo.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<Usuario> listarTodos() {
         return repository.findAll();
@@ -52,7 +54,13 @@ public class UsuarioService {
                     });
         }
 
+        if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
+            throw new CampoInvalidoExeception("senha", "A senha é obrigatória.");
+        }
+
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
         usuario.setDataCadastro(LocalDateTime.now());
+
         return repository.save(usuario);
     }
 
@@ -79,11 +87,14 @@ public class UsuarioService {
         existente.setCpf(usuario.getCpf());
         existente.setEmail(usuario.getEmail());
         existente.setTelefone(usuario.getTelefone());
-        existente.setSenha(usuario.getSenha());
         existente.setStatus(usuario.getStatus());
         existente.setTipoUsuario(usuario.getTipoUsuario());
         existente.setPerfil(usuario.getPerfil());
         existente.setNivelAcesso(usuario.getNivelAcesso());
+
+        if (usuario.getSenha() != null && !usuario.getSenha().isBlank()) {
+            existente.setSenha(passwordEncoder.encode(usuario.getSenha()));
+        }
 
         return repository.save(existente);
     }

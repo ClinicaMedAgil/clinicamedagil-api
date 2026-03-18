@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class AgendamentoController {
 
     @GetMapping
     @Operation(summary="Relação de Agendamentos", description="Lista Todos Agendamentos")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('PACIENTE')")
     public ResponseEntity<List<AgendamentoDTO>> listarTodosAgendamentos() {
         List<AgendamentoDTO> lista = service.listarTodos()
                 .stream()

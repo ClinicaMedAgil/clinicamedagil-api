@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +47,7 @@ public class EspecialidadeController {
 
     @GetMapping
     @Operation(summary="Relação de Especialistas", description="Listat Todos os Especialistas")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO')")
     public ResponseEntity<List<EspecialidadeDTO>> listarTodasEspecialidades() {
         List<EspecialidadeDTO> lista = service.listarTodos()
                 .stream()
