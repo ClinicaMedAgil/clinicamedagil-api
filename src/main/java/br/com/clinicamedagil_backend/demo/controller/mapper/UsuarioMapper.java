@@ -28,6 +28,7 @@ public interface UsuarioMapper {
     @Mapping(source = "tipoUsuarioId", target = "tipoUsuario.id")
     @Mapping(source = "perfilId", target = "perfil.id")
     @Mapping(source = "nivelAcessoId", target = "nivelAcesso.id")
+    @Mapping(target = "dataCadastro", ignore = true)
     Usuario toEntity(UsuarioDTO dto);
 
 }
