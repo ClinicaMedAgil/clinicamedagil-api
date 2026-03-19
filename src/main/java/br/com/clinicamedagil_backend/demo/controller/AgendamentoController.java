@@ -46,7 +46,7 @@ public class AgendamentoController {
 
     @GetMapping
     @Operation(summary="Relação de Agendamentos", description="Lista Todos Agendamentos")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('PACIENTE')")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('USUARIO')")
     public ResponseEntity<List<AgendamentoDTO>> listarTodosAgendamentos() {
         List<AgendamentoDTO> lista = service.listarTodos()
                 .stream()
@@ -57,12 +57,14 @@ public class AgendamentoController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Agendamento por Id", description="Localizar Agendamento por Id")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<AgendamentoDTO> buscarAgendamentoPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra Agendamento", description="Cadastrar Novo Agendamento")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<AgendamentoDTO> salvarAgendamento(@RequestBody @Valid AgendamentoDTO dto) {
         Agendamento salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -70,6 +72,7 @@ public class AgendamentoController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza Agendamento", description="Alterar informações de Agendamento já Cadastrado")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<AgendamentoDTO> atualizarAgendamento(@PathVariable Long id,
                                                 @RequestBody @Valid AgendamentoDTO dto) {
         Agendamento atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -78,6 +81,7 @@ public class AgendamentoController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta Agendamento", description="Deletar Agendamento Pesquisado por ID")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<Void> deletarAgendamento(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

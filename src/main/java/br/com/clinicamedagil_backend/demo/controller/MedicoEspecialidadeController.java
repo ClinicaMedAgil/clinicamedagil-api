@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class MedicoEspecialidadeController {
 
     @GetMapping
     @Operation(summary="Relação de MedicosEspecialistas", description="Lista Todos Medicos Especialistas")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<List<MedicoEspecialidadeDTO>> listarTodosMedicoEspecialidades() {
         List<MedicoEspecialidadeDTO> lista = service.listarTodos()
                 .stream()
@@ -48,12 +50,14 @@ public class MedicoEspecialidadeController {
 
     @GetMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Pesquisa MedicoEspecialista por Id", description="Localizar Médico Especialista por Id")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<MedicoEspecialidadeDTO> buscarMedicoEspecialidadePorId(@RequestBody @Valid MedicoEspecialidadeId id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra MedicoEspecialista", description="Cadastrar Novo Médico Especialista")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicoEspecialidadeDTO> salvarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeDTO dto) {
         MedicoEspecialidade salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -62,6 +66,7 @@ public class MedicoEspecialidadeController {
 
     @DeleteMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Deleta MedicoEspecialista", description="Deletar Médico Especialista Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeId id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

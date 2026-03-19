@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class ConsultasController {
 
     @GetMapping
     @Operation(summary="Relação de Consultas", description="Listar Todas Consultas")
+    @PreAuthorize("hasRole('ATENDENTE') or hasRole('MEDICO')")
     public ResponseEntity<List<ConsultaDTO>> listarTodosConsultas() {
         List<ConsultaDTO> lista = service.listarTodos()
                 .stream()
@@ -55,12 +57,14 @@ public class ConsultasController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Consulta por Id", description="Localizar Consultar por Id")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE') or ('MEDICO')")
     public ResponseEntity<ConsultaDTO> buscarConsultaPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra Consulta", description="Cadastrar Nova Consulta")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<ConsultaDTO> salvarConsulta(@RequestBody @Valid ConsultaDTO dto) {
         Consulta salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -68,6 +72,7 @@ public class ConsultasController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza Consulta", description="Alterar Informações de Consulta já Cadastrada")
+    @PreAuthorize("hasRole('ATENDENTE')")
     public ResponseEntity<ConsultaDTO> atualizarConsulta(@PathVariable Long id,
                                                 @RequestBody @Valid ConsultaDTO dto) {
         Consulta atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -76,6 +81,7 @@ public class ConsultasController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta Consulta", description="Deletar Consulta Pesquisada por ID")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<Void> deletarConsulta(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

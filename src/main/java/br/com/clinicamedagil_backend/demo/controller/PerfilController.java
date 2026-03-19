@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class PerfilController {
 
     @GetMapping
     @Operation(summary="Relação de Perfis", description="Lista Todos os Perfis")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PerfilDTO>> listarTodosPerfis() {
         List<PerfilDTO> lista = service.listarTodos()
                 .stream()
@@ -47,12 +49,14 @@ public class PerfilController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Perfil por Id", description="Localizar Perfil por Id")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PerfilDTO> buscarPerfilPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra Perfil", description="Cadastrar Novo Perfil")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PerfilDTO> salvarPerfil(@RequestBody @Valid PerfilDTO dto) {
         Perfil salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -60,6 +64,7 @@ public class PerfilController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza Perfil", description="Alterar informações de Perfil já cadastrado")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PerfilDTO> atualizarPerfil(@PathVariable Long id,
                                                        @RequestBody @Valid PerfilDTO dto) {
         Perfil atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -68,6 +73,7 @@ public class PerfilController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta Perfil", description="Deletar Perfil Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarPerfil(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();
