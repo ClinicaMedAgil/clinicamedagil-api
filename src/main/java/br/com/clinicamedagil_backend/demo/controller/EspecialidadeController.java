@@ -58,6 +58,7 @@ public class EspecialidadeController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Especialista por Id", description="Buscar Especialista por Id")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('ATENDENTE')")
     public ResponseEntity<EspecialidadeDTO> buscarEspecialidadePorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
@@ -65,6 +66,7 @@ public class EspecialidadeController {
 
     @PostMapping
     @Operation(summary="Cadastra Especialista", description="Cadastrar Novo Especialista")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EspecialidadeDTO> salvarEspecialidade(@RequestBody @Valid EspecialidadeDTO dto) {
         Especialidade salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -72,6 +74,7 @@ public class EspecialidadeController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza Especialista", description="Alterar informações de Especialista já Cadastrado")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EspecialidadeDTO> atualizarEspecialidade(@PathVariable Long id,
                                                        @RequestBody @Valid EspecialidadeDTO dto) {
         Especialidade atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -80,6 +83,7 @@ public class EspecialidadeController {
     
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta Especialista", description="Deletar Especialista Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarEspecialidade(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

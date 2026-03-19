@@ -57,12 +57,14 @@ public class HorarioAgendaController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa HorarioAgenda por Id", description="Localizar Horário Agendado por Id")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('ATENDENTE')")
     public ResponseEntity<HorarioAgendaDTO> buscarHorarioAgendaPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra HorarioAgenda", description="Cadastrar Novo Horário Agendado")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HorarioAgendaDTO> salvarHorarioAgenda(@RequestBody @Valid HorarioAgendaDTO dto) {
         HorarioAgenda salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -70,6 +72,7 @@ public class HorarioAgendaController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza HorarioAgenda", description="Alterar Informações de Horário Agendado já cadastrado")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<HorarioAgendaDTO> atualizarHorarioAgenda(@PathVariable Long id,
                                                 @RequestBody @Valid HorarioAgendaDTO dto) {
         HorarioAgenda atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -78,6 +81,7 @@ public class HorarioAgendaController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta HorarioAgenda", description="Deletar Horário Agendado Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarHorarioAgenda(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

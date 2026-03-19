@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -45,6 +46,7 @@ public class NivelAcessoController {
 
     @GetMapping
     @Operation(summary="Relação de NiveisAcessos", description="Lista todos os Niveis de Acessos")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<NivelAcessoDTO>> listarTodosNiveisAcesso() {
         List<NivelAcessoDTO> lista = service.listarTodos()
                 .stream()
@@ -55,12 +57,14 @@ public class NivelAcessoController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa NivelAcesso por Id", description="Buscar Nivel de Acesso por Id")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NivelAcessoDTO> buscarNivelAcessoPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra NivelAcesso", description="Cadastrar Novo Nivel de Acesso")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NivelAcessoDTO> salvarNivelAcesso(@RequestBody @Valid NivelAcessoDTO dto) {
         NivelAcesso salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -68,6 +72,7 @@ public class NivelAcessoController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza NivelAcesso", description="Alterar informações de Nivel de Acesso já cadastrado") 
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NivelAcessoDTO> atualizarNivelAcesso(@PathVariable Long id,
                                                        @RequestBody @Valid NivelAcessoDTO dto) {
         NivelAcesso atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -76,6 +81,7 @@ public class NivelAcessoController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta NivelAcesso", description="Deletar Nivel de Acesso Pesquisado por ID")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletarNivelAcesso(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();
