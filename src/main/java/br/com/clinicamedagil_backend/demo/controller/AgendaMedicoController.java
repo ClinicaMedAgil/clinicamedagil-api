@@ -46,7 +46,7 @@ public class AgendaMedicoController {
 
     @GetMapping
     @Operation(summary="Relação de AgendaMedico", description="Listar Todos Agendamentos Médicos")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO')")
+    @PreAuthorize("hasRole('ATENDENTE') or hasRole('MEDICO')")
     public ResponseEntity<List<AgendaMedicoDTO>> listarTodosAgendaMedicos() {
         List<AgendaMedicoDTO> lista = service.listarTodos()
                 .stream()
@@ -57,14 +57,14 @@ public class AgendaMedicoController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa AgendaMedico por Id", description="Localizar Agendamentos Médicos por Id")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE')")
     public ResponseEntity<AgendaMedicoDTO> buscarAgendaMedicoPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
     @PostMapping
     @Operation(summary="Cadastra AgendaMedico", description="Cadastrar Novo Agendamento Médico")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('ATENDENTE')")
     public ResponseEntity<AgendaMedicoDTO> salvarAgendaMedico(@RequestBody @Valid AgendaMedicoDTO dto) {
         AgendaMedico salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -72,7 +72,7 @@ public class AgendaMedicoController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza AgendaMedico", description="Alterar Informações de Agendamento Médico já Cadastrado")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('ATENDENTE')")
     public ResponseEntity<AgendaMedicoDTO> atualizarAgendaMedico(@PathVariable Long id,
                                                 @RequestBody @Valid AgendaMedicoDTO dto) {
         AgendaMedico atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -81,7 +81,7 @@ public class AgendaMedicoController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta AgendaMedico", description="Deletar um Agendamento Médico Pesquisado por ID")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('ATENDENTE')")
     public ResponseEntity<Void> deletarAgendaMedico(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

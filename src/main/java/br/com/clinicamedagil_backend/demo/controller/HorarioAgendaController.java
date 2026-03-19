@@ -46,7 +46,7 @@ public class HorarioAgendaController {
 
     @GetMapping
     @Operation(summary="Relação de HorarioAgenda", description="Lista Todos Horários Agendados")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO')")
+    @PreAuthorize("hasRole('ATENDENTE') or hasRole('MEDICO')")
     public ResponseEntity<List<HorarioAgendaDTO>> listarTodosHorariosAgendas() {
         List<HorarioAgendaDTO> lista = service.listarTodos()
                 .stream()
@@ -57,7 +57,7 @@ public class HorarioAgendaController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa HorarioAgenda por Id", description="Localizar Horário Agendado por Id")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE')")
     public ResponseEntity<HorarioAgendaDTO> buscarHorarioAgendaPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }

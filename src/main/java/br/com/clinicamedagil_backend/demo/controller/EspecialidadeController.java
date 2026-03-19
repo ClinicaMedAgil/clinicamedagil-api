@@ -58,7 +58,7 @@ public class EspecialidadeController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Especialista por Id", description="Buscar Especialista por Id")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE')")
     public ResponseEntity<EspecialidadeDTO> buscarEspecialidadePorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
