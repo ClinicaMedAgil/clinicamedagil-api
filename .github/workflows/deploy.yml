@@ -42,3 +42,23 @@ jobs:
             sudo docker stop backend || true
             sudo docker rm backend || true
             sudo docker run -d --name backend -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
+            
+            # ... passos anteriores de Setup Java e Login Docker Hub ...
+
+      - name: Build and Push with Docker Compose
+        run: |
+          # O build usa o arquivo docker-compose.yml para saber como montar a imagem
+           docker compose build
+            docker compose push
+
+      - name: Deploy to OCI via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_VM_IP_BACK }}
+          username: ubuntu
+          key: ${{ secrets.OCI_SSH_KEY_BACK }}
+          script: |
+         # Entra na pasta do projeto (ajuste o caminho se necessário)
+              cd ~/clinicamedagil-api 
+              sudo docker compose pull
+              sudo docker compose up -d
