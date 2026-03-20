@@ -16,4 +16,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
+    java.util.List<Consulta> findByPacienteId(long pacienteId);
+
+    java.util.List<Consulta> findByMedicoId(long medicoId);
 }

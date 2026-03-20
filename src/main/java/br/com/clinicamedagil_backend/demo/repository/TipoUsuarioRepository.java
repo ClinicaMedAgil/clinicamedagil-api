@@ -3,6 +3,8 @@ package br.com.clinicamedagil_backend.demo.repository;
 import br.com.clinicamedagil_backend.demo.entities.TipoUsuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 
 /**
  * TipoUsuarioRepository.interface
@@ -17,4 +19,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface TipoUsuarioRepository extends JpaRepository<TipoUsuario, Long> {
+    Optional<TipoUsuario> findByNomeIgnoreCase(String nome);
 }

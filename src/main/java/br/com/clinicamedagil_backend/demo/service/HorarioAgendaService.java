@@ -3,6 +3,7 @@ package br.com.clinicamedagil_backend.demo.service;
 import br.com.clinicamedagil_backend.demo.entities.HorarioAgenda;
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.exceptions.OperacaoNaoPerminitidaException;
+import br.com.clinicamedagil_backend.demo.repository.AgendaMedicoRepository;
 import br.com.clinicamedagil_backend.demo.repository.HorarioAgendaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.util.List;
 public class HorarioAgendaService {
 
     private final HorarioAgendaRepository repository;
+    private final AgendaMedicoRepository agendaMedicoRepository;
 
     public List<HorarioAgenda> listarTodos() {
         return repository.findAll();
@@ -53,6 +55,8 @@ public class HorarioAgendaService {
             throw new OperacaoNaoPerminitidaException("A hora final deve ser maior que a hora inicial.");
         }
 
+        horarioAgenda.setAgenda(resolveAgenda(horarioAgenda));
+
         return repository.save(horarioAgenda);
     }
 
@@ -64,7 +68,7 @@ public class HorarioAgendaService {
             throw new OperacaoNaoPerminitidaException("A hora final deve ser maior que a hora inicial.");
         }
 
-        existente.setAgenda(horarioAgenda.getAgenda());
+        existente.setAgenda(resolveAgenda(horarioAgenda));
         existente.setHoraInicio(horarioAgenda.getHoraInicio());
         existente.setHoraFim(horarioAgenda.getHoraFim());
         existente.setStatusHorario(horarioAgenda.getStatusHorario());
@@ -75,5 +79,14 @@ public class HorarioAgendaService {
     public void deletar(Long id) {
         HorarioAgenda existente = buscarPorId(id);
         repository.delete(existente);
+    }
+
+    private br.com.clinicamedagil_backend.demo.entities.AgendaMedico resolveAgenda(HorarioAgenda horarioAgenda) {
+        Long agendaId = horarioAgenda.getAgenda() != null ? horarioAgenda.getAgenda().getId() : null;
+        if (agendaId == null) {
+            throw new CampoInvalidoExeception("agendaId", "A agenda é obrigatória.");
+        }
+        return agendaMedicoRepository.findById(agendaId)
+                .orElseThrow(() -> new CampoInvalidoExeception("agendaId", "Agenda não encontrada."));
     }
 }

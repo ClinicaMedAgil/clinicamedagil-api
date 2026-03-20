@@ -1,7 +1,5 @@
 package br.com.clinicamedagil_backend.demo.controller.dto;
 
-import jakarta.validation.constraints.NotNull;
-
 /**
  * MedicoEspecialidadeDTO.record
  *
@@ -15,11 +13,26 @@ import jakarta.validation.constraints.NotNull;
  * </pre>
  */
 public record MedicoEspecialidadeDTO(
-
-        @NotNull
         Long medicoId,
+        Long especialidadeId,
+        IdReferenciaDTO medico,
+        IdReferenciaDTO especialidade
 
-        @NotNull
-        Long especialidadeId
+) {
+    public Long medicoIdResolvido() {
+        if (medicoId != null) {
+            return medicoId;
+        }
+        return medico != null ? medico.id() : null;
+    }
 
-) {}
+    public Long especialidadeIdResolvido() {
+        if (especialidadeId != null) {
+            return especialidadeId;
+        }
+        return especialidade != null ? especialidade.id() : null;
+    }
+
+    public record IdReferenciaDTO(Long id) {
+    }
+}

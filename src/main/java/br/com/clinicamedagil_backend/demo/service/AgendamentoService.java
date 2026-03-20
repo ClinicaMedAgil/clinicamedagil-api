@@ -4,6 +4,8 @@ import br.com.clinicamedagil_backend.demo.entities.Agendamento;
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.exceptions.OperacaoNaoPerminitidaException;
 import br.com.clinicamedagil_backend.demo.repository.AgendamentoRepository;
+import br.com.clinicamedagil_backend.demo.repository.HorarioAgendaRepository;
+import br.com.clinicamedagil_backend.demo.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,8 @@ import java.util.List;
 public class AgendamentoService {
 
     private final AgendamentoRepository repository;
+    private final HorarioAgendaRepository horarioAgendaRepository;
+    private final UsuarioRepository usuarioRepository;
 
     public List<Agendamento> listarTodos() {
         return repository.findAll();
@@ -50,6 +54,9 @@ public class AgendamentoService {
             agendamento.setDataMarcacao(LocalDateTime.now());
         }
 
+        agendamento.setHorario(resolveHorario(agendamento));
+        agendamento.setPaciente(resolvePaciente(agendamento));
+
         return repository.save(agendamento);
     }
 
@@ -60,8 +67,8 @@ public class AgendamentoService {
             throw new OperacaoNaoPerminitidaException("Não é permitido alterar um agendamento cancelado.");
         }
 
-        existente.setHorario(agendamento.getHorario());
-        existente.setPaciente(agendamento.getPaciente());
+        existente.setHorario(resolveHorario(agendamento));
+        existente.setPaciente(resolvePaciente(agendamento));
         existente.setDataMarcacao(
                 agendamento.getDataMarcacao() != null ? agendamento.getDataMarcacao() : existente.getDataMarcacao()
         );
@@ -78,5 +85,23 @@ public class AgendamentoService {
         }
 
         repository.delete(existente);
+    }
+
+    private br.com.clinicamedagil_backend.demo.entities.HorarioAgenda resolveHorario(Agendamento agendamento) {
+        Long horarioId = agendamento.getHorario() != null ? agendamento.getHorario().getId() : null;
+        if (horarioId == null) {
+            throw new CampoInvalidoExeception("horarioId", "O horário é obrigatório.");
+        }
+        return horarioAgendaRepository.findById(horarioId)
+                .orElseThrow(() -> new CampoInvalidoExeception("horarioId", "Horário não encontrado."));
+    }
+
+    private br.com.clinicamedagil_backend.demo.entities.Usuario resolvePaciente(Agendamento agendamento) {
+        Long pacienteId = agendamento.getPaciente() != null ? agendamento.getPaciente().getId() : null;
+        if (pacienteId == null) {
+            throw new CampoInvalidoExeception("pacienteId", "O paciente é obrigatório.");
+        }
+        return usuarioRepository.findById(pacienteId)
+                .orElseThrow(() -> new CampoInvalidoExeception("pacienteId", "Paciente não encontrado."));
     }
 }
