@@ -1,3 +1,5 @@
+package br.com.clinicamedagil_backend.demo.configuration;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -7,10 +9,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Libera todos os endpoints
-                .allowedOrigins("*") // Em produção, você trocaria o "*" pelo IP do seu Frontend
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
+        registry.addMapping("/**")
+                .allowedOrigins(
+                        "https://www.clinicamedagil.com.br",
+                        "https://clinicamedagil.com.br",
+                        "http://134.65.24.235"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(false);
+                .allowCredentials(true);
     }
 }

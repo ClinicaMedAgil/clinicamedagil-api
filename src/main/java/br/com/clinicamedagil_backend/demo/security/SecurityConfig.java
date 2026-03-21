@@ -65,28 +65,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                .cors(Customizer.withDefaults()) // Ativa o CORS configurado na WebConfig
+                .csrf(csrf -> csrf.disable())    // Desativa CSRF (comum em APIs REST)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/clinicamedagil-service/auth/**",
-                                "/clinicamedagil-service/usuarios/criarUsuarioComum",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs",
-                                "/v3/api-docs/**",
-                                "/v3/api-docs/swagger-config",
-                                "/v3/api-docs.yaml"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
+                        .anyRequest().permitAll()    // Apenas para teste, depois você restringe
+                );
         return http.build();
     }
 
