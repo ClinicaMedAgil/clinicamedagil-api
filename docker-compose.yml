@@ -1,9 +1,10 @@
 services:
-  # SERVIÇO DA API (O que estava faltando)
+  # SERVIÇO DA API
   api:
     build: .
     image: Paulojoserc/clinicamedagil-api:latest
     container_name: backend
+    platform: linux/arm64  # <--- Força a arquitetura correta para o seu servidor
     ports:
       - "8080:8080"
     depends_on:
@@ -13,10 +14,14 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_cliagil
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+    networks:
+      - clianet
 
+  # SERVIÇO DO BANCO DE DADOS
   postgres:
     image: postgres:16-alpine
     container_name: clinicamedagil-postgres
+    platform: linux/arm64  # <--- Garante que o Postgres também suba em ARM
     restart: unless-stopped
     environment:
       POSTGRES_DB: db_cliagil
@@ -31,6 +36,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - clianet
 
 volumes:
   postgres_data:
+
+networks:
+  clianet:
+    driver: bridge
