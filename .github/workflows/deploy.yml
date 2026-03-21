@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout do código
+      # 1. Checkout do código
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Configuração do Java
+      # 2. Configuração do Java
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -22,25 +22,24 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      # Build do projeto
+      # 3. Build do projeto (Gera o .jar)
       - name: Build with Maven
         run: mvn -B package -DskipTests --file pom.xml
 
-      # Login no Docker Hub
+      # 4. Login no Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build e push da imagem
-      - name: Build and Push with Docker Compose
+      # 5. Build e Push (Usando Docker direto para evitar erro de DNS/Interpolação)
+      - name: Build and Push Docker Image
         run: |
-          export DOCKER_USER=${{ secrets.DOCKERHUB_USERNAME }}
-          docker compose build
-          docker compose push
+          docker build -t docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest .
+          docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
 
-      # Deploy na VM OCI via SSH
+      # 6. Deploy na VM OCI via SSH
       - name: Deploy to OCI via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -51,17 +50,18 @@ jobs:
             mkdir -p ~/clinicamedagil-api
             cd ~/clinicamedagil-api
 
-            # Criar docker-compose.yml na VM (caso não exista)
+            # Criar/Atualizar o docker-compose.yml dinamicamente na VM
             cat <<EOF > docker-compose.yml
             services:
               api:
-                image: ${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
+                image: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
                 container_name: backend
                 ports:
                   - "8080:8080"
                 restart: always
+                # Se precisar do Postgres na mesma rede, adicione as configs aqui
             EOF
 
-            # Atualizar container
+            # Atualizar e subir os containers
             sudo docker compose pull
             sudo docker compose up -d
