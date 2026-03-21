@@ -14,32 +14,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Configuração do Java
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-          cache: maven
+      # 2. Configuração do QEMU e Buildx (CRUCIAL para gerar imagem ARM em runner Intel)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      # 3. Build do projeto (Gera o .jar)
-      - name: Build with Maven
-        run: mvn -B package -DskipTests --file pom.xml
-
-      # 4. Login no Docker Hub
+      # 3. Login no Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 5. Build e Push (Usando Docker direto para evitar erro de DNS/Interpolação)
+      # 4. Build e Push Multi-Arquitetura
+      # Aqui o Buildx faz o trabalho pesado de compilar para ARM64
       - name: Build and Push Docker Image
-        run: |
-          docker build -t docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest .
-          docker push docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/arm64  # <--- Define a arquitetura do seu servidor OCI
+          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
 
-      # 6. Deploy na VM OCI via SSH
+      # 5. Deploy na VM OCI via SSH
       - name: Deploy to OCI via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -50,16 +49,53 @@ jobs:
             mkdir -p ~/clinicamedagil-api
             cd ~/clinicamedagil-api
 
-            # Criar/Atualizar o docker-compose.yml dinamicamente na VM
+            # Criar/Atualizar o docker-compose.yml completo com Rede e Postgres
             cat <<EOF > docker-compose.yml
             services:
               api:
                 image: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
                 container_name: backend
+                platform: linux/arm64
                 ports:
                   - "8080:8080"
                 restart: always
-                # Se precisar do Postgres na mesma rede, adicione as configs aqui
+                depends_on:
+                  postgres:
+                    condition: service_healthy
+                environment:
+                  - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_cliagil
+                  - SPRING_DATASOURCE_USERNAME=postgres
+                  - SPRING_DATASOURCE_PASSWORD=postgres
+                networks:
+                  - clianet
+
+              postgres:
+                image: postgres:16-alpine
+                container_name: clinicamedagil-postgres
+                platform: linux/arm64
+                restart: unless-stopped
+                environment:
+                  POSTGRES_DB: db_cliagil
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                ports:
+                  - "5433:5432"
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                healthcheck:
+                  test: ["CMD-SHELL", "pg_isready -U postgres -d db_cliagil"]
+                  interval: 10s
+                  timeout: 5s
+                  retries: 5
+                networks:
+                  - clianet
+
+            volumes:
+              postgres_data:
+
+            networks:
+              clianet:
+                driver: bridge
             EOF
 
             # Atualizar e subir os containers
