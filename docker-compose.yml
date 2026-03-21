@@ -1,10 +1,8 @@
 services:
-  # SERVIÇO DA API
   api:
-    build: .
-    image: Paulojoserc/clinicamedagil-api:latest
+    image: Paulojoserc/clinicamedagil-api:latest # Use a imagem do Docker Hub
     container_name: backend
-    platform: linux/arm64  # <--- Força a arquitetura correta para o seu servidor
+    # Remova a seção 'build: .' daqui no servidor
     ports:
       - "8080:8080"
     depends_on:
