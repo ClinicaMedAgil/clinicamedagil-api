@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * CustomUserDetailsService.java
@@ -35,14 +36,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
 
-        String role = usuario.getPerfil() != null && usuario.getPerfil().getNome() != null
-                ? "ROLE_" + usuario.getPerfil().getNome().toUpperCase()
-                : "ROLE_USUARIO";
+        String role = "ROLE_" + UserRoleResolver.resolveNormalizedRole(usuario);
+        boolean ativo = isUsuarioAtivo(usuario.getStatus());
 
         return User.builder()
                 .username(usuario.getEmail())
                 .password(usuario.getSenha())
                 .authorities(List.of(new SimpleGrantedAuthority(role)))
+                .disabled(!ativo)
                 .build();
+    }
+
+    private boolean isUsuarioAtivo(String status) {
+        return status != null && "ATIVO".equals(status.trim().toUpperCase(Locale.ROOT));
     }
 }

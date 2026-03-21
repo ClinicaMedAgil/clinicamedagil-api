@@ -5,17 +5,19 @@ import br.com.clinicamedagil_backend.demo.controller.dto.ErroResposta;
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.exceptions.OperacaoNaoPerminitidaException;
 import br.com.clinicamedagil_backend.demo.exceptions.RegistroDuplicadoException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * GlobalExcepstionHandler.java
@@ -39,7 +41,7 @@ public class GlobalExcepstionHandler {
         List<ErroCampo> listaErros = fieldErrors
                 .stream()
                 .map(fe -> new ErroCampo(fe.getField(), fe.getDefaultMessage()))
-                .collect(Collectors.toList());
+                .toList();
         return new ErroResposta(
                 HttpStatus.UNPROCESSABLE_ENTITY.value(),
                 "Erro de validação!",
@@ -48,7 +50,14 @@ public class GlobalExcepstionHandler {
 
     @ExceptionHandler(RegistroDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErroResposta handleRegistroDuplicadoException(RegistroDuplicadoException e){
+    public ErroResposta handleRegistroDuplicadoException(RegistroDuplicadoException e) {
+        String campo = e.getCampo();
+        if (campo != null && !campo.isBlank()) {
+            return new ErroResposta(
+                    HttpStatus.CONFLICT.value(),
+                    e.getMessage(),
+                    List.of(new ErroCampo(campo, e.getMessage())));
+        }
         return ErroResposta.conflito(e.getMessage());
     }
 
@@ -82,8 +91,26 @@ public class GlobalExcepstionHandler {
         return new ErroResposta(HttpStatus.FORBIDDEN.value(), "Acesso negado: seu usuário não tem permissão para realizar esta operação.",List.of());
     }
 
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErroResposta handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        return new ErroResposta(HttpStatus.FORBIDDEN.value(), "Acesso negado: seu usuário não tem permissão para realizar esta operação.", List.of());
+    }
+
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<?> handleIllegalStateException(IllegalStateException ex) {
+    public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErroResposta handleBadCredentialsException(BadCredentialsException e) {
+        return new ErroResposta(HttpStatus.UNAUTHORIZED.value(), "Credenciais inválidas.", List.of());
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErroResposta handleDisabledException(DisabledException e) {
+        return new ErroResposta(HttpStatus.FORBIDDEN.value(), "Usuário inativo. Login não permitido.", List.of());
     }
 }

@@ -14,5 +14,6 @@ package br.com.clinicamedagil_backend.demo.controller.dto.auth;
  */
 public record LoginResponse(
         String token,
-        String tipo
+        String tipo,
+        AuthUserContextDTO usuario
 ) {}

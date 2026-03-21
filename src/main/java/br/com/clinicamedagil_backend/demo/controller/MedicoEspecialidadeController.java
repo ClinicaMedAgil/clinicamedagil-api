@@ -39,7 +39,7 @@ public class MedicoEspecialidadeController {
 
     @GetMapping
     @Operation(summary="Relação de MedicosEspecialistas", description="Lista Todos Medicos Especialistas")
-    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE') or hasRole('PACIENTE')")
     public ResponseEntity<List<MedicoEspecialidadeDTO>> listarTodosMedicoEspecialidades() {
         List<MedicoEspecialidadeDTO> lista = service.listarTodos()
                 .stream()
@@ -50,8 +50,11 @@ public class MedicoEspecialidadeController {
 
     @GetMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Pesquisa MedicoEspecialista por Id", description="Localizar Médico Especialista por Id")
-    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
-    public ResponseEntity<MedicoEspecialidadeDTO> buscarMedicoEspecialidadePorId(@RequestBody @Valid MedicoEspecialidadeId id) {
+    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE') or hasRole('PACIENTE')")
+    public ResponseEntity<MedicoEspecialidadeDTO> buscarMedicoEspecialidadePorId(
+            @PathVariable Long medicoId,
+            @PathVariable Long especialidadeId) {
+        MedicoEspecialidadeId id = new MedicoEspecialidadeId(medicoId, especialidadeId);
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
 
@@ -59,7 +62,7 @@ public class MedicoEspecialidadeController {
     @Operation(summary="Cadastra MedicoEspecialista", description="Cadastrar Novo Médico Especialista")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MedicoEspecialidadeDTO> salvarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeDTO dto) {
-        MedicoEspecialidade salvo = service.salvar(mapper.toEntity(dto));
+        MedicoEspecialidade salvo = service.salvarPorIds(dto.medicoIdResolvido(), dto.especialidadeIdResolvido());
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
     }
 
@@ -67,7 +70,10 @@ public class MedicoEspecialidadeController {
     @DeleteMapping("/{medicoId}/{especialidadeId}")
     @Operation(summary="Deleta MedicoEspecialista", description="Deletar Médico Especialista Pesquisado por ID")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deletarMedicoEspecialidade(@RequestBody @Valid MedicoEspecialidadeId id) {
+    public ResponseEntity<Void> deletarMedicoEspecialidade(
+            @PathVariable Long medicoId,
+            @PathVariable Long especialidadeId) {
+        MedicoEspecialidadeId id = new MedicoEspecialidadeId(medicoId, especialidadeId);
         service.deletar(id);
         return ResponseEntity.noContent().build();
     }

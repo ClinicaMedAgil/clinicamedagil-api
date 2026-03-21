@@ -44,6 +44,13 @@ public class Consulta {
     @JoinColumn(name = "id_paciente")
     private Usuario paciente;
 
+    /**
+     * AGENDADA = marcada; FINALIZADA = encerrada pelo médico (endpoint de encerramento).
+     */
+    @Column(name = "status_consulta")
+    private String statusConsulta;
+
+    /** Preenchido ao finalizar (instante do encerramento); não define regra de negócio. */
     private LocalDateTime dataConsulta;
 
     private String queixaPrincipal;

@@ -3,6 +3,8 @@ package br.com.clinicamedagil_backend.demo.repository;
 import br.com.clinicamedagil_backend.demo.entities.Perfil;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 
 /**
  * PerfilRepository.interface
@@ -17,4 +19,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface PerfilRepository extends JpaRepository<Perfil, Long> {
+    Optional<Perfil> findByNomeIgnoreCase(String nome);
 }

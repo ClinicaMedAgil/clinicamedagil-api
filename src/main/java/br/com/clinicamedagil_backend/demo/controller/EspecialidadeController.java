@@ -47,7 +47,7 @@ public class EspecialidadeController {
 
     @GetMapping
     @Operation(summary="Relação de Especialistas", description="Listat Todos os Especialistas")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MEDICO') or hasRole('PACIENTE') or hasRole('USUARIO') or hasRole('ATENDENTE')")
     public ResponseEntity<List<EspecialidadeDTO>> listarTodasEspecialidades() {
         List<EspecialidadeDTO> lista = service.listarTodos()
                 .stream()
@@ -58,7 +58,7 @@ public class EspecialidadeController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa Especialista por Id", description="Buscar Especialista por Id")
-    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE') or hasRole('PACIENTE') or hasRole('USUARIO')")
     public ResponseEntity<EspecialidadeDTO> buscarEspecialidadePorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }

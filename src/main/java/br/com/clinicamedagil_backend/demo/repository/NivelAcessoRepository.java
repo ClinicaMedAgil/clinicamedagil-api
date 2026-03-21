@@ -3,6 +3,8 @@ package br.com.clinicamedagil_backend.demo.repository;
 import br.com.clinicamedagil_backend.demo.entities.NivelAcesso;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 
 /**
  * NivelAcessoRepository.interface
@@ -17,4 +19,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface NivelAcessoRepository extends JpaRepository<NivelAcesso, Long> {
+    Optional<NivelAcesso> findByNomeIgnoreCase(String nome);
 }

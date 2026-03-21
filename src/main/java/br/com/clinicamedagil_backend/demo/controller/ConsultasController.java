@@ -1,12 +1,22 @@
 package br.com.clinicamedagil_backend.demo.controller;
 
 import java.util.List;
+import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.Validator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -20,7 +30,6 @@ import br.com.clinicamedagil_backend.demo.entities.Consulta;
 import br.com.clinicamedagil_backend.demo.service.ConsultaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -43,10 +52,12 @@ public class ConsultasController {
 
     private final ConsultaService service;
     private final ConsultaMapper mapper;
+    private final ObjectMapper objectMapper;
+    private final Validator validator;
 
     @GetMapping
     @Operation(summary="Relação de Consultas", description="Listar Todas Consultas")
-    @PreAuthorize("hasRole('ATENDENTE') or hasRole('MEDICO')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<List<ConsultaDTO>> listarTodosConsultas() {
         List<ConsultaDTO> lista = service.listarTodos()
                 .stream()
@@ -55,35 +66,101 @@ public class ConsultasController {
         return ResponseEntity.ok(lista);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/minhas")
+    @Operation(summary="Relação de Minhas Consultas", description="Listar consultas do usuário autenticado")
+    @PreAuthorize("hasRole('PACIENTE') or hasRole('MEDICO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<List<ConsultaDTO>> listarMinhasConsultas(Authentication authentication) {
+        List<ConsultaDTO> lista = service.listarMinhas(authentication.getName(), authorities(authentication))
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+        return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/paciente")
+    @Operation(summary="Relação de Consultas do Paciente", description="Paciente visualiza apenas consultas em que é o id_paciente")
+    @PreAuthorize("hasRole('PACIENTE') or hasRole('USUARIO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<List<ConsultaDTO>> listarConsultasPaciente(Authentication authentication) {
+        List<ConsultaDTO> lista = service.listarMinhasComoPaciente(authentication.getName(), authorities(authentication))
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+        return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/medico")
+    @Operation(summary="Relação de Consultas do Médico", description="Médico visualiza apenas consultas em que é o id_medico")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<List<ConsultaDTO>> listarConsultasMedico(Authentication authentication) {
+        List<ConsultaDTO> lista = service.listarMinhasComoMedico(authentication.getName(), authorities(authentication))
+                .stream()
+                .map(mapper::toDTO)
+                .toList();
+        return ResponseEntity.ok(lista);
+    }
+
+    @GetMapping("/{id:\\d+}")
     @Operation(summary="Pesquisa Consulta por Id", description="Localizar Consultar por Id")
-    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE') or ('MEDICO')")
-    public ResponseEntity<ConsultaDTO> buscarConsultaPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
+    @PreAuthorize("hasRole('PACIENTE') or hasRole('ATENDENTE') or hasRole('MEDICO') or hasRole('ADMIN')")
+    public ResponseEntity<ConsultaDTO> buscarConsultaPorId(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(mapper.toDTO(service.buscarPorIdComPermissao(id, authentication.getName(), authorities(authentication))));
     }
 
     @PostMapping
-    @Operation(summary="Cadastra Consulta", description="Cadastrar Nova Consulta")
-    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
-    public ResponseEntity<ConsultaDTO> salvarConsulta(@RequestBody @Valid ConsultaDTO dto) {
-        Consulta salvo = service.salvar(mapper.toEntity(dto));
+    @Operation(
+            summary = "Cadastra Consulta",
+            description = "Corpo completo (agendamentoId, medicoId, pacienteId) ou somente { \"horarioId\": number } para marcar pelo horário.")
+    @PreAuthorize("hasRole('PACIENTE') or hasRole('USUARIO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<ConsultaDTO> salvarConsulta(@RequestBody JsonNode body, Authentication authentication)
+            throws JsonProcessingException {
+        if (body != null && body.hasNonNull("horarioId") && !body.hasNonNull("agendamentoId")) {
+            long horarioId = body.get("horarioId").asLong();
+            Consulta salvo = service.marcarPorHorarioId(horarioId, authentication.getName(), authorities(authentication));
+            return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
+        }
+        ConsultaDTO dto = objectMapper.treeToValue(body, ConsultaDTO.class);
+        Set<ConstraintViolation<ConsultaDTO>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+        Consulta salvo = service.salvarComPermissao(mapper.toEntity(dto), authentication.getName(), authorities(authentication));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     @Operation(summary="Atualiza Consulta", description="Alterar Informações de Consulta já Cadastrada")
-    @PreAuthorize("hasRole('ATENDENTE')")
+    @PreAuthorize("hasRole('ATENDENTE') or hasRole('ADMIN')")
     public ResponseEntity<ConsultaDTO> atualizarConsulta(@PathVariable Long id,
-                                                @RequestBody @Valid ConsultaDTO dto) {
-        Consulta atualizado = service.atualizar(id, mapper.toEntity(dto));
+                                                @RequestBody @Valid ConsultaDTO dto,
+                                                Authentication authentication) {
+        Consulta atualizado = service.atualizarComPermissao(id, mapper.toEntity(dto), authorities(authentication));
         return ResponseEntity.ok(mapper.toDTO(atualizado));
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary="Deleta Consulta", description="Deletar Consulta Pesquisada por ID")
-    @PreAuthorize("hasRole('USUARIO') or hasRole('ATENDENTE')")
-    public ResponseEntity<Void> deletarConsulta(@PathVariable Long id) {
-        service.deletar(id);
+    @DeleteMapping("/{id:\\d+}")
+    @Operation(
+            summary = "Cancelar / deletar consulta",
+            description = "Paciente ou usuário comum cancela apenas a própria consulta; atendente e administrador podem cancelar conforme regras de acesso.")
+    @PreAuthorize("hasRole('PACIENTE') or hasRole('USUARIO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<Void> deletarConsulta(@PathVariable Long id, Authentication authentication) {
+        service.deletarComPermissao(id, authentication.getName(), authorities(authentication));
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id:\\d+}/finalizar")
+    @Operation(
+            summary = "Encerrar consulta (médico)",
+            description = "Define statusConsulta = FINALIZADA e dataConsulta = instante do encerramento. "
+                    + "Médico responsável, atendente ou administrador.")
+    @PreAuthorize("hasRole('MEDICO') or hasRole('ATENDENTE') or hasRole('ADMIN')")
+    public ResponseEntity<ConsultaDTO> finalizarConsulta(@PathVariable Long id, Authentication authentication) {
+        Consulta finalizada = service.finalizarComPermissao(id, authentication.getName(), authorities(authentication));
+        return ResponseEntity.ok(mapper.toDTO(finalizada));
+    }
+
+    private List<String> authorities(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .toList();
     }
 }
