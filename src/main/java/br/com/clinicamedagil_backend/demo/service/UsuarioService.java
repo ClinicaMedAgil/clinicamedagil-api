@@ -68,14 +68,14 @@ public class UsuarioService {
         if (usuario.getEmail() != null && !usuario.getEmail().isBlank()) {
             repository.findByEmail(usuario.getEmail())
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe um usuário cadastrado com este email.");
+                        throw new RegistroDuplicadoException("email", "Já existe um usuário cadastrado com este email.");
                     });
         }
 
         if (usuario.getCpf() != null && !usuario.getCpf().isBlank()) {
             repository.findByCpf(usuario.getCpf())
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe um usuário cadastrado com este CPF.");
+                        throw new RegistroDuplicadoException("cpf", "Já existe um usuário cadastrado com este CPF.");
                     });
         }
 
@@ -95,7 +95,7 @@ public class UsuarioService {
             repository.findByEmail(usuario.getEmail())
                     .filter(u -> !u.getId().equals(id))
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe outro usuário cadastrado com este email.");
+                        throw new RegistroDuplicadoException("email", "Já existe outro usuário cadastrado com este email.");
                     });
         }
 
@@ -103,7 +103,7 @@ public class UsuarioService {
             repository.findByCpf(usuario.getCpf())
                     .filter(u -> !u.getId().equals(id))
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe outro usuário cadastrado com este CPF.");
+                        throw new RegistroDuplicadoException("cpf", "Já existe outro usuário cadastrado com este CPF.");
                     });
         }
 
@@ -198,7 +198,7 @@ public class UsuarioService {
             repository.findByEmail(email)
                     .filter(u -> idIgnorado == null || !u.getId().equals(idIgnorado))
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe outro usuário cadastrado com este email.");
+                        throw new RegistroDuplicadoException("email", "Já existe outro usuário cadastrado com este email.");
                     });
         }
 
@@ -206,7 +206,7 @@ public class UsuarioService {
             repository.findByCpf(cpf)
                     .filter(u -> idIgnorado == null || !u.getId().equals(idIgnorado))
                     .ifPresent(u -> {
-                        throw new RegistroDuplicadoException("Já existe outro usuário cadastrado com este CPF.");
+                        throw new RegistroDuplicadoException("cpf", "Já existe outro usuário cadastrado com este CPF.");
                     });
         }
     }

@@ -3,6 +3,9 @@ package br.com.clinicamedagil_backend.demo.repository;
 import br.com.clinicamedagil_backend.demo.entities.HorarioAgenda;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * HorarioAgendaRepository.interface
  *
@@ -16,4 +19,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface HorarioAgendaRepository extends JpaRepository<HorarioAgenda, Long> {
+
+    List<HorarioAgenda> findByAgenda_IdInAndStatusHorario(Collection<Long> agendaIds, String statusHorario);
+
+    long countByAgenda_Id(Long agendaId);
+
+    long countByAgenda_IdAndStatusHorario(Long agendaId, String statusHorario);
+
+    void deleteByAgenda_Id(Long agendaId);
 }

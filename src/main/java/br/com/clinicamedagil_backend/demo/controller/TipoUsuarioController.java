@@ -38,7 +38,7 @@ public class TipoUsuarioController {
 
     @GetMapping
     @Operation(summary="Relação de TiposUsuarios", description="Lista Todos os Tipos Usuarios")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<List<TipoUsuarioDTO>> listarTodosTiposUsuarios() {
         List<TipoUsuarioDTO> lista = service.listarTodos()
                 .stream()
@@ -49,7 +49,7 @@ public class TipoUsuarioController {
 
     @GetMapping("/{id}")
     @Operation(summary="Pesquisa TipoUsuario por Id", description="Localizar Tipo de Usuário por Id")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<TipoUsuarioDTO> buscarTipoUsuarioPorId(@PathVariable Long id) {
         return ResponseEntity.ok(mapper.toDTO(service.buscarPorId(id)));
     }
@@ -57,7 +57,7 @@ public class TipoUsuarioController {
 
     @PostMapping
     @Operation(summary="Cadastra TipoUsuario", description="Cadastrar Novo Tipo de Usuário")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<TipoUsuarioDTO> salvarTipoUsuario(@RequestBody @Valid TipoUsuarioDTO dto) {
         TipoUsuario salvo = service.salvar(mapper.toEntity(dto));
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toDTO(salvo));
@@ -65,7 +65,7 @@ public class TipoUsuarioController {
 
     @PutMapping("/{id}")
     @Operation(summary="Atualiza TipoUsuario", description="Alterar informações de Tipo de Usuário já cadastrado")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<TipoUsuarioDTO> atualizarTipoUsuario(@PathVariable Long id,
                                                        @RequestBody @Valid TipoUsuarioDTO dto) {
         TipoUsuario atualizado = service.atualizar(id, mapper.toEntity(dto));
@@ -74,7 +74,7 @@ public class TipoUsuarioController {
 
     @DeleteMapping("/{id}")
     @Operation(summary="Deleta TipoUsuario", description="Deletar Tipo de Usuário Pesquisado por ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('ATENDENTE')")
     public ResponseEntity<Void> deletarTipoUsuario(@PathVariable Long id) {
         service.deletar(id);
         return ResponseEntity.noContent().build();

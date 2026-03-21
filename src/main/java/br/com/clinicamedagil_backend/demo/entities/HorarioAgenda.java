@@ -2,6 +2,8 @@ package br.com.clinicamedagil_backend.demo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalTime;
 
@@ -33,6 +35,7 @@ public class HorarioAgenda {
     private Long id;
 
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "id_agenda")
     private AgendaMedico agenda;
 

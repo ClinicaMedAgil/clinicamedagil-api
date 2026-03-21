@@ -22,6 +22,8 @@ public interface AgendaMedicoMapper {
 
     @Mapping(source = "medico.id", target = "medicoId")
     @Mapping(source = "especialidade.id", target = "especialidadeId")
+    @Mapping(source = "medico.nome", target = "nomeMedico")
+    @Mapping(source = "especialidade.nomeEspecialidade", target = "nomeEspecialidade")
     AgendaMedicoDTO toDTO(AgendaMedico entity);
 
     @Mapping(source = "medicoId", target = "medico.id")

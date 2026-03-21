@@ -29,6 +29,12 @@ public record AgendaMedicoDTO(
         @NotNull
         LocalDate dataAgenda,
 
-        String statusAgenda
+        String statusAgenda,
+
+        /** Nome do usuário médico (tb_usuario.nome), preenchido nas respostas de catálogo/listagem. */
+        String nomeMedico,
+
+        /** Nome da especialidade (tb_especialidade.nome_especialidade). */
+        String nomeEspecialidade
 
 ) {}

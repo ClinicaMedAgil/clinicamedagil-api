@@ -36,8 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado."));
 
-        String profileName = usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null;
-        String role = "ROLE_" + normalizeRole(profileName);
+        String role = "ROLE_" + UserRoleResolver.resolveNormalizedRole(usuario);
         boolean ativo = isUsuarioAtivo(usuario.getStatus());
 
         return User.builder()
@@ -46,18 +45,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .authorities(List.of(new SimpleGrantedAuthority(role)))
                 .disabled(!ativo)
                 .build();
-    }
-
-    private String normalizeRole(String perfilNome) {
-        if (perfilNome == null || perfilNome.isBlank()) {
-            return "USUARIO";
-        }
-
-        String normalized = perfilNome.toUpperCase().trim();
-        if ("ADMINISTRADOR".equals(normalized)) {
-            return "ADMIN";
-        }
-        return normalized;
     }
 
     private boolean isUsuarioAtivo(String status) {

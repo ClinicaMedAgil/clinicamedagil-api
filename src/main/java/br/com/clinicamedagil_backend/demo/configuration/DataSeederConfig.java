@@ -2,12 +2,17 @@ package br.com.clinicamedagil_backend.demo.configuration;
 
 import br.com.clinicamedagil_backend.demo.entities.AgendaMedico;
 import br.com.clinicamedagil_backend.demo.entities.Especialidade;
+import br.com.clinicamedagil_backend.demo.entities.HorarioAgenda;
+import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidade;
+import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidadeId;
 import br.com.clinicamedagil_backend.demo.entities.NivelAcesso;
 import br.com.clinicamedagil_backend.demo.entities.Perfil;
 import br.com.clinicamedagil_backend.demo.entities.TipoUsuario;
 import br.com.clinicamedagil_backend.demo.entities.Usuario;
 import br.com.clinicamedagil_backend.demo.repository.AgendaMedicoRepository;
 import br.com.clinicamedagil_backend.demo.repository.EspecialidadeRepository;
+import br.com.clinicamedagil_backend.demo.repository.HorarioAgendaRepository;
+import br.com.clinicamedagil_backend.demo.repository.MedicoEspecialidadeRepository;
 import br.com.clinicamedagil_backend.demo.repository.NivelAcessoRepository;
 import br.com.clinicamedagil_backend.demo.repository.PerfilRepository;
 import br.com.clinicamedagil_backend.demo.repository.TipoUsuarioRepository;
@@ -21,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Component
@@ -29,6 +35,8 @@ public class DataSeederConfig implements CommandLineRunner {
 
     private static final String STATUS_ATIVO = "ATIVO";
     private static final String STATUS_DISPONIVEL = "DISPONIVEL";
+    /** Agenda publicada para o paciente (ex.: INATIVA não aparece no catálogo do paciente). */
+    private static final String STATUS_AGENDA_ATIVA = "ATIVA";
 
     @Value("${app.seed.enabled:true}")
     private boolean seedEnabled;
@@ -41,6 +49,8 @@ public class DataSeederConfig implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final EspecialidadeRepository especialidadeRepository;
     private final AgendaMedicoRepository agendaMedicoRepository;
+    private final MedicoEspecialidadeRepository medicoEspecialidadeRepository;
+    private final HorarioAgendaRepository horarioAgendaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -131,12 +141,21 @@ public class DataSeederConfig implements CommandLineRunner {
         Especialidade clinicaGeral = saveEspecialidade("Clinica Geral", "Atendimento clinico geral");
         Especialidade cardiologia = saveEspecialidade("Cardiologia", "Atendimento cardiologico");
 
-        saveAgendaMedico(medico1, clinicaGeral, LocalDate.now().plusDays(1), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico1, cardiologia, LocalDate.now().plusDays(2), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico2, clinicaGeral, LocalDate.now().plusDays(1), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico2, cardiologia, LocalDate.now().plusDays(3), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico3, clinicaGeral, LocalDate.now().plusDays(2), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico3, cardiologia, LocalDate.now().plusDays(4), STATUS_DISPONIVEL);
+        ensureMedicoEspecialidade(medico1, clinicaGeral);
+        ensureMedicoEspecialidade(medico1, cardiologia);
+        ensureMedicoEspecialidade(medico2, clinicaGeral);
+        ensureMedicoEspecialidade(medico2, cardiologia);
+        ensureMedicoEspecialidade(medico3, clinicaGeral);
+        ensureMedicoEspecialidade(medico3, cardiologia);
+
+        saveAgendaMedico(medico1, clinicaGeral, LocalDate.now().plusDays(1), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico1, cardiologia, LocalDate.now().plusDays(2), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico2, clinicaGeral, LocalDate.now().plusDays(1), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico2, cardiologia, LocalDate.now().plusDays(3), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico3, clinicaGeral, LocalDate.now().plusDays(2), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico3, cardiologia, LocalDate.now().plusDays(4), STATUS_AGENDA_ATIVA);
+
+        seedHorariosDisponiveisNasAgendas();
     }
 
     private TipoUsuario saveTipoUsuario(String nome) {
@@ -161,21 +180,32 @@ public class DataSeederConfig implements CommandLineRunner {
     }
 
     private Usuario saveUsuario(SeedUserData userData, TipoUsuario tipoUsuario, Perfil perfil, NivelAcesso nivelAcesso) {
-        return usuarioRepository.findByEmail(userData.email())
-                .orElseGet(() -> usuarioRepository.save(
-                        Usuario.builder()
-                                .nome(userData.nome())
-                                .cpf(userData.cpf())
-                                .email(userData.email())
-                                .telefone(userData.telefone())
-                                .senha(passwordEncoder.encode(userData.senha()))
-                                .status(userData.status())
-                                .dataCadastro(LocalDateTime.now())
-                                .tipoUsuario(tipoUsuario)
-                                .perfil(perfil)
-                                .nivelAcesso(nivelAcesso)
-                                .build()
-                ));
+        Usuario usuario = usuarioRepository.findByEmail(userData.email()).orElse(null);
+        if (usuario == null) {
+            usuario = Usuario.builder()
+                    .nome(userData.nome())
+                    .cpf(userData.cpf())
+                    .email(userData.email())
+                    .telefone(userData.telefone())
+                    .senha(passwordEncoder.encode(userData.senha()))
+                    .status(userData.status())
+                    .dataCadastro(LocalDateTime.now())
+                    .tipoUsuario(tipoUsuario)
+                    .perfil(perfil)
+                    .nivelAcesso(nivelAcesso)
+                    .build();
+            return usuarioRepository.save(usuario);
+        }
+
+        usuario.setNome(userData.nome());
+        usuario.setCpf(userData.cpf());
+        usuario.setTelefone(userData.telefone());
+        usuario.setStatus(userData.status());
+        usuario.setTipoUsuario(tipoUsuario);
+        usuario.setPerfil(perfil);
+        usuario.setNivelAcesso(nivelAcesso);
+
+        return usuarioRepository.save(usuario);
     }
 
     private Especialidade saveEspecialidade(String nomeEspecialidade, String descricao) {
@@ -188,6 +218,44 @@ public class DataSeederConfig implements CommandLineRunner {
                                 .descricao(descricao)
                                 .build()
                 ));
+    }
+
+    private void ensureMedicoEspecialidade(Usuario medico, Especialidade especialidade) {
+        MedicoEspecialidadeId id = new MedicoEspecialidadeId(medico.getId(), especialidade.getId());
+        if (medicoEspecialidadeRepository.existsById(id)) {
+            return;
+        }
+        medicoEspecialidadeRepository.save(
+                MedicoEspecialidade.builder()
+                        .id(id)
+                        .medico(medico)
+                        .especialidade(especialidade)
+                        .build()
+        );
+    }
+
+    private void seedHorariosDisponiveisNasAgendas() {
+        for (AgendaMedico agenda : agendaMedicoRepository.findAll()) {
+            if (horarioAgendaRepository.countByAgenda_Id(agenda.getId()) > 0) {
+                continue;
+            }
+            horarioAgendaRepository.save(
+                    HorarioAgenda.builder()
+                            .agenda(agenda)
+                            .horaInicio(LocalTime.of(8, 0))
+                            .horaFim(LocalTime.of(8, 30))
+                            .statusHorario(STATUS_DISPONIVEL)
+                            .build()
+            );
+            horarioAgendaRepository.save(
+                    HorarioAgenda.builder()
+                            .agenda(agenda)
+                            .horaInicio(LocalTime.of(9, 0))
+                            .horaFim(LocalTime.of(9, 30))
+                            .statusHorario(STATUS_DISPONIVEL)
+                            .build()
+            );
+        }
     }
 
     private void saveAgendaMedico(Usuario medico, Especialidade especialidade, LocalDate dataAgenda, String statusAgenda) {
