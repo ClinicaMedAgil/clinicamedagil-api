@@ -2,7 +2,7 @@ services:
   # SERVIÇO DA API (O que estava faltando)
   api:
     build: .
-    image: ${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
+    image: Paulojoserc/clinicamedagil-api:latest
     container_name: backend
     ports:
       - "8080:8080"
