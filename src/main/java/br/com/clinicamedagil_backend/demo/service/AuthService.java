@@ -6,6 +6,7 @@ import br.com.clinicamedagil_backend.demo.controller.dto.auth.AuthUserContextDTO
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.repository.UsuarioRepository;
 import br.com.clinicamedagil_backend.demo.security.JwtService;
+import br.com.clinicamedagil_backend.demo.security.UserRoleResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -66,7 +67,7 @@ public class AuthService {
                 .authorities(List.of())
                 .build();
 
-        String role = normalizeRole(usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null);
+        String role = UserRoleResolver.resolveNormalizedRole(usuario);
         AuthUserContextDTO usuarioContexto = new AuthUserContextDTO(
                 usuario.getNome(),
                 usuario.getCpf(),
@@ -89,7 +90,7 @@ public class AuthService {
         var usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new CampoInvalidoExeception(CAMPO_EMAIL, MENSAGEM_USUARIO_NAO_ENCONTRADO));
 
-        String role = normalizeRole(usuario.getPerfil() != null ? usuario.getPerfil().getNome() : null);
+        String role = UserRoleResolver.resolveNormalizedRole(usuario);
         return new AuthUserContextDTO(usuario.getNome(), usuario.getCpf(), usuario.getEmail(), role);
     }
 
@@ -109,15 +110,4 @@ public class AuthService {
         return status != null && "ATIVO".equals(status.trim().toUpperCase(Locale.ROOT));
     }
 
-    private String normalizeRole(String perfilNome) {
-        if (perfilNome == null || perfilNome.isBlank()) {
-            return "USUARIO";
-        }
-
-        String normalized = perfilNome.toUpperCase().trim();
-        if ("ADMINISTRADOR".equals(normalized)) {
-            return "ADMIN";
-        }
-        return normalized;
-    }
 }

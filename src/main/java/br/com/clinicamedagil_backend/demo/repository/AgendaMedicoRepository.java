@@ -23,7 +23,9 @@ import java.util.List;
 public interface AgendaMedicoRepository extends JpaRepository<AgendaMedico, Long> {
 
     @Query("""
-            SELECT a FROM AgendaMedico a
+            SELECT DISTINCT a FROM AgendaMedico a
+            JOIN FETCH a.medico
+            JOIN FETCH a.especialidade
             WHERE a.medico.id = :medicoId
               AND a.especialidade.id = :especialidadeId
               AND a.statusAgenda = :statusAgenda
@@ -37,7 +39,9 @@ public interface AgendaMedicoRepository extends JpaRepository<AgendaMedico, Long
             @Param("desde") LocalDate desde);
 
     @Query("""
-            SELECT a FROM AgendaMedico a
+            SELECT DISTINCT a FROM AgendaMedico a
+            JOIN FETCH a.medico
+            JOIN FETCH a.especialidade
             WHERE a.medico.id = :medicoId
               AND a.statusAgenda = :statusAgenda
               AND a.dataAgenda >= :desde
@@ -46,5 +50,36 @@ public interface AgendaMedicoRepository extends JpaRepository<AgendaMedico, Long
     List<AgendaMedico> findDisponiveisPorMedicoDesde(
             @Param("medicoId") Long medicoId,
             @Param("statusAgenda") String statusAgenda,
+            @Param("desde") LocalDate desde);
+
+    /** Agendas ativas: publicação liberada ao paciente (ATIVA; DISPONIVEL mantido por compatibilidade). */
+    @Query("""
+            SELECT DISTINCT a FROM AgendaMedico a
+            JOIN FETCH a.medico
+            JOIN FETCH a.especialidade
+            WHERE a.medico.id = :medicoId
+              AND a.especialidade.id = :especialidadeId
+              AND upper(trim(a.statusAgenda)) in :statusesAgendaAtiva
+              AND a.dataAgenda >= :desde
+            ORDER BY a.dataAgenda ASC, a.id ASC
+            """)
+    List<AgendaMedico> findAtivasDesde(
+            @Param("medicoId") Long medicoId,
+            @Param("especialidadeId") Long especialidadeId,
+            @Param("statusesAgendaAtiva") List<String> statusesAgendaAtiva,
+            @Param("desde") LocalDate desde);
+
+    @Query("""
+            SELECT DISTINCT a FROM AgendaMedico a
+            JOIN FETCH a.medico
+            JOIN FETCH a.especialidade
+            WHERE a.medico.id = :medicoId
+              AND upper(trim(a.statusAgenda)) in :statusesAgendaAtiva
+              AND a.dataAgenda >= :desde
+            ORDER BY a.dataAgenda ASC, a.id ASC
+            """)
+    List<AgendaMedico> findAtivasPorMedicoDesde(
+            @Param("medicoId") Long medicoId,
+            @Param("statusesAgendaAtiva") List<String> statusesAgendaAtiva,
             @Param("desde") LocalDate desde);
 }

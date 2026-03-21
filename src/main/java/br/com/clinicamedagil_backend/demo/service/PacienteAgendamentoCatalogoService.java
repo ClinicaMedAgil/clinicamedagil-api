@@ -33,6 +33,9 @@ public class PacienteAgendamentoCatalogoService {
 
     private static final String STATUS_DISPONIVEL = "DISPONIVEL";
 
+    /** Agenda publicada para o paciente; DISPONIVEL mantido por compatibilidade com dados antigos. */
+    private static final List<String> STATUS_AGENDA_ATIVA_PARA_PACIENTE = List.of("ATIVA", "DISPONIVEL");
+
     private final EspecialidadeService especialidadeService;
     private final EspecialidadeRepository especialidadeRepository;
     private final MedicoEspecialidadeRepository medicoEspecialidadeRepository;
@@ -82,36 +85,13 @@ public class PacienteAgendamentoCatalogoService {
         return medicoEspecialidadeRepository.findByEspecialidadeId(especialidadeId);
     }
 
-    /** Agendas futuras DISPONIVEL do médico (todas as especialidades) com horários DISPONIVEL. */
+    /** Agendas futuras ativas do médico (todas as especialidades) com horários DISPONIVEL. */
     public List<AgendaComHorariosDisponiveisDTO> listarAgendasComHorariosDisponiveisPorMedico(Long medicoId) {
         Objects.requireNonNull(medicoId, "Id do médico é obrigatório.");
         LocalDate hoje = LocalDate.now();
-        List<AgendaMedico> agendas = agendaMedicoRepository.findDisponiveisPorMedicoDesde(
-                medicoId, STATUS_DISPONIVEL, hoje);
-        if (agendas.isEmpty()) {
-            return List.of();
-        }
-        List<Long> agendaIds = agendas.stream().map(AgendaMedico::getId).toList();
-        List<HorarioAgenda> horarios = horarioAgendaRepository.findByAgenda_IdInAndStatusHorario(agendaIds, STATUS_DISPONIVEL);
-        Map<Long, List<HorarioAgenda>> porAgenda = horarios.stream()
-                .filter(h -> h.getAgenda() != null && h.getAgenda().getId() != null)
-                .collect(Collectors.groupingBy(h -> h.getAgenda().getId()));
-        List<AgendaComHorariosDisponiveisDTO> resultado = new ArrayList<>();
-        for (AgendaMedico agenda : agendas) {
-            AgendaMedicoDTO agendaDto = agendaMedicoMapper.toDTO(agenda);
-            List<HorarioAgenda> lista = porAgenda.getOrDefault(agenda.getId(), Collections.emptyList());
-            List<HorarioAgendaDTO> horariosDto = lista.stream()
-                    .sorted((a, b) -> {
-                        if (a.getHoraInicio() == null || b.getHoraInicio() == null) {
-                            return 0;
-                        }
-                        return a.getHoraInicio().compareTo(b.getHoraInicio());
-                    })
-                    .map(horarioAgendaMapper::toDTO)
-                    .toList();
-            resultado.add(new AgendaComHorariosDisponiveisDTO(agendaDto, horariosDto));
-        }
-        return resultado;
+        List<AgendaMedico> agendas = agendaMedicoRepository.findAtivasPorMedicoDesde(
+                medicoId, STATUS_AGENDA_ATIVA_PARA_PACIENTE, hoje);
+        return montarAgendasComHorariosDisponiveis(agendas);
     }
 
     public List<AgendaComHorariosDisponiveisDTO> listarAgendasComHorariosDisponiveis(Long especialidadeId, Long medicoId) {
@@ -125,20 +105,21 @@ public class PacienteAgendamentoCatalogoService {
         }
 
         LocalDate hoje = LocalDate.now();
-        List<AgendaMedico> agendas = agendaMedicoRepository.findDisponiveisDesde(
-                medicoId, especialidadeId, STATUS_DISPONIVEL, hoje);
+        List<AgendaMedico> agendas = agendaMedicoRepository.findAtivasDesde(
+                medicoId, especialidadeId, STATUS_AGENDA_ATIVA_PARA_PACIENTE, hoje);
 
+        return montarAgendasComHorariosDisponiveis(agendas);
+    }
+
+    private List<AgendaComHorariosDisponiveisDTO> montarAgendasComHorariosDisponiveis(List<AgendaMedico> agendas) {
         if (agendas.isEmpty()) {
             return List.of();
         }
-
         List<Long> agendaIds = agendas.stream().map(AgendaMedico::getId).toList();
         List<HorarioAgenda> horarios = horarioAgendaRepository.findByAgenda_IdInAndStatusHorario(agendaIds, STATUS_DISPONIVEL);
-
         Map<Long, List<HorarioAgenda>> porAgenda = horarios.stream()
                 .filter(h -> h.getAgenda() != null && h.getAgenda().getId() != null)
                 .collect(Collectors.groupingBy(h -> h.getAgenda().getId()));
-
         List<AgendaComHorariosDisponiveisDTO> resultado = new ArrayList<>();
         for (AgendaMedico agenda : agendas) {
             AgendaMedicoDTO agendaDto = agendaMedicoMapper.toDTO(agenda);

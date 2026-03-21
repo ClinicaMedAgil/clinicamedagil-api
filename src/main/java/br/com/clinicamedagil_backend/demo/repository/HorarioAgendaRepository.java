@@ -23,4 +23,8 @@ public interface HorarioAgendaRepository extends JpaRepository<HorarioAgenda, Lo
     List<HorarioAgenda> findByAgenda_IdInAndStatusHorario(Collection<Long> agendaIds, String statusHorario);
 
     long countByAgenda_Id(Long agendaId);
+
+    long countByAgenda_IdAndStatusHorario(Long agendaId, String statusHorario);
+
+    void deleteByAgenda_Id(Long agendaId);
 }

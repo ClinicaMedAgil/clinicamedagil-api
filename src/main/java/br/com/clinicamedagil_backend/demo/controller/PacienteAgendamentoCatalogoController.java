@@ -77,7 +77,7 @@ public class PacienteAgendamentoCatalogoController {
     @GetMapping("/medicos/{medicoId}/horarios-disponiveis")
     @Operation(
             summary = "Quadro de horários por médico",
-            description = "Todas as agendas futuras DISPONIVEL do médico (qualquer especialidade) com horários DISPONIVEL.")
+            description = "Agendas ativas (ATIVA ou DISPONIVEL legado), data a partir de hoje, com horários DISPONIVEL.")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AgendaComHorariosDisponiveisDTO>> listarHorariosDisponiveisPorMedico(
             @PathVariable Long medicoId) {
@@ -87,7 +87,7 @@ public class PacienteAgendamentoCatalogoController {
     @GetMapping("/especialidades/{especialidadeId}/medicos/{medicoId}/horarios-disponiveis")
     @Operation(
             summary = "Agendas e horários disponíveis",
-            description = "Agendas do médico na especialidade com status DISPONIVEL (data >= hoje) e horários DISPONIVEL.")
+            description = "Agendas ativas do médico na especialidade (data >= hoje) e horários DISPONIVEL.")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AgendaComHorariosDisponiveisDTO>> listarHorariosDisponiveis(
             @PathVariable Long especialidadeId,

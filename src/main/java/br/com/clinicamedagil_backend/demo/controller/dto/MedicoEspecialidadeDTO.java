@@ -15,8 +15,8 @@ package br.com.clinicamedagil_backend.demo.controller.dto;
 public record MedicoEspecialidadeDTO(
         Long medicoId,
         Long especialidadeId,
-        IdReferenciaDTO medico,
-        IdReferenciaDTO especialidade
+        MedicoResumoDTO medico,
+        EspecialidadeResumoDTO especialidade
 
 ) {
     public Long medicoIdResolvido() {
@@ -33,6 +33,10 @@ public record MedicoEspecialidadeDTO(
         return especialidade != null ? especialidade.id() : null;
     }
 
-    public record IdReferenciaDTO(Long id) {
+    /** id + nome para exibição no front (evita fallback só com id). */
+    public record MedicoResumoDTO(Long id, String nome) {
+    }
+
+    public record EspecialidadeResumoDTO(Long id, String nome) {
     }
 }

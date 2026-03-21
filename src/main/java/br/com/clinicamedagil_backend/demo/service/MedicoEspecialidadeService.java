@@ -36,7 +36,7 @@ public class MedicoEspecialidadeService {
     private final EspecialidadeRepository especialidadeRepository;
 
     public List<MedicoEspecialidade> listarTodos() {
-        return repository.findAll();
+        return repository.findAllWithMedicoEspecialidade();
     }
 
     public MedicoEspecialidade buscarPorId(MedicoEspecialidadeId id) {

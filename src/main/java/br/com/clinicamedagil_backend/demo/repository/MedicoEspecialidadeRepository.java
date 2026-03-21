@@ -22,6 +22,18 @@ import java.util.List;
  */
 public interface MedicoEspecialidadeRepository extends JpaRepository<MedicoEspecialidade, MedicoEspecialidadeId> {
 
-    @Query("SELECT m FROM MedicoEspecialidade m WHERE m.id.idEspecialidade = :especialidadeId")
+    @Query("""
+            SELECT DISTINCT m FROM MedicoEspecialidade m
+            JOIN FETCH m.medico
+            JOIN FETCH m.especialidade
+            WHERE m.id.idEspecialidade = :especialidadeId
+            """)
     List<MedicoEspecialidade> findByEspecialidadeId(@Param("especialidadeId") Long especialidadeId);
+
+    @Query("""
+            SELECT DISTINCT m FROM MedicoEspecialidade m
+            JOIN FETCH m.medico
+            JOIN FETCH m.especialidade
+            """)
+    List<MedicoEspecialidade> findAllWithMedicoEspecialidade();
 }

@@ -28,6 +28,7 @@ public class HorarioAgendaService {
 
     private final HorarioAgendaRepository repository;
     private final AgendaMedicoRepository agendaMedicoRepository;
+    private final AgendaMedicoService agendaMedicoService;
 
     public List<HorarioAgenda> listarTodos() {
         return repository.findAll();
@@ -57,7 +58,11 @@ public class HorarioAgendaService {
 
         horarioAgenda.setAgenda(resolveAgenda(horarioAgenda));
 
-        return repository.save(horarioAgenda);
+        HorarioAgenda salvo = repository.save(horarioAgenda);
+        if (salvo.getAgenda() != null && salvo.getAgenda().getId() != null) {
+            agendaMedicoService.sincronizarStatusAgendaComHorariosLivres(salvo.getAgenda().getId());
+        }
+        return salvo;
     }
 
     public HorarioAgenda atualizar(Long id, HorarioAgenda horarioAgenda) {
@@ -73,12 +78,20 @@ public class HorarioAgendaService {
         existente.setHoraFim(horarioAgenda.getHoraFim());
         existente.setStatusHorario(horarioAgenda.getStatusHorario());
 
-        return repository.save(existente);
+        HorarioAgenda salvo = repository.save(existente);
+        if (salvo.getAgenda() != null && salvo.getAgenda().getId() != null) {
+            agendaMedicoService.sincronizarStatusAgendaComHorariosLivres(salvo.getAgenda().getId());
+        }
+        return salvo;
     }
 
     public void deletar(Long id) {
         HorarioAgenda existente = buscarPorId(id);
+        Long agendaId = existente.getAgenda() != null ? existente.getAgenda().getId() : null;
         repository.delete(existente);
+        if (agendaId != null) {
+            agendaMedicoService.sincronizarStatusAgendaComHorariosLivres(agendaId);
+        }
     }
 
     private br.com.clinicamedagil_backend.demo.entities.AgendaMedico resolveAgenda(HorarioAgenda horarioAgenda) {

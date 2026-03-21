@@ -4,11 +4,14 @@ import br.com.clinicamedagil_backend.demo.entities.AgendaMedico;
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.repository.AgendaMedicoRepository;
 import br.com.clinicamedagil_backend.demo.repository.EspecialidadeRepository;
+import br.com.clinicamedagil_backend.demo.repository.HorarioAgendaRepository;
 import br.com.clinicamedagil_backend.demo.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * AgendaMedicoService.java
@@ -26,9 +29,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AgendaMedicoService {
 
+    private static final String STATUS_HORARIO_DISPONIVEL = "DISPONIVEL";
+    private static final String STATUS_AGENDA_ATIVA = "ATIVA";
+    private static final String STATUS_AGENDA_INATIVA = "INATIVA";
+
     private final AgendaMedicoRepository repository;
     private final UsuarioRepository usuarioRepository;
     private final EspecialidadeRepository especialidadeRepository;
+    private final HorarioAgendaRepository horarioAgendaRepository;
 
     public List<AgendaMedico> listarTodos() {
         return repository.findAll();
@@ -37,6 +45,33 @@ public class AgendaMedicoService {
     public AgendaMedico buscarPorId(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new CampoInvalidoExeception("id", "Agenda médica não encontrada."));
+    }
+
+    /**
+     * Sem horários DISPONIVEL: agenda ATIVA ou DISPONIVEL (legado) vira INATIVA.
+     * Com ao menos um DISPONIVEL: agenda INATIVA volta a ATIVA.
+     */
+    public void sincronizarStatusAgendaComHorariosLivres(Long agendaId) {
+        if (agendaId == null) {
+            return;
+        }
+        AgendaMedico agenda = repository.findById(agendaId).orElse(null);
+        if (agenda == null) {
+            return;
+        }
+        long livres = horarioAgendaRepository.countByAgenda_IdAndStatusHorario(agendaId, STATUS_HORARIO_DISPONIVEL);
+        String raw = agenda.getStatusAgenda();
+        String upper = raw == null ? "" : raw.trim().toUpperCase(Locale.ROOT);
+
+        if (livres == 0) {
+            if (STATUS_AGENDA_ATIVA.equals(upper) || STATUS_HORARIO_DISPONIVEL.equals(upper)) {
+                agenda.setStatusAgenda(STATUS_AGENDA_INATIVA);
+                repository.save(agenda);
+            }
+        } else if (STATUS_AGENDA_INATIVA.equals(upper)) {
+            agenda.setStatusAgenda(STATUS_AGENDA_ATIVA);
+            repository.save(agenda);
+        }
     }
 
     public AgendaMedico salvar(AgendaMedico agendaMedico) {
@@ -69,8 +104,10 @@ public class AgendaMedicoService {
         return repository.save(existente);
     }
 
+    @Transactional
     public void deletar(Long id) {
         AgendaMedico existente = buscarPorId(id);
+        horarioAgendaRepository.deleteByAgenda_Id(existente.getId());
         repository.delete(existente);
     }
 

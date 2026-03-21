@@ -35,6 +35,8 @@ public class DataSeederConfig implements CommandLineRunner {
 
     private static final String STATUS_ATIVO = "ATIVO";
     private static final String STATUS_DISPONIVEL = "DISPONIVEL";
+    /** Agenda publicada para o paciente (ex.: INATIVA não aparece no catálogo do paciente). */
+    private static final String STATUS_AGENDA_ATIVA = "ATIVA";
 
     @Value("${app.seed.enabled:true}")
     private boolean seedEnabled;
@@ -146,12 +148,12 @@ public class DataSeederConfig implements CommandLineRunner {
         ensureMedicoEspecialidade(medico3, clinicaGeral);
         ensureMedicoEspecialidade(medico3, cardiologia);
 
-        saveAgendaMedico(medico1, clinicaGeral, LocalDate.now().plusDays(1), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico1, cardiologia, LocalDate.now().plusDays(2), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico2, clinicaGeral, LocalDate.now().plusDays(1), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico2, cardiologia, LocalDate.now().plusDays(3), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico3, clinicaGeral, LocalDate.now().plusDays(2), STATUS_DISPONIVEL);
-        saveAgendaMedico(medico3, cardiologia, LocalDate.now().plusDays(4), STATUS_DISPONIVEL);
+        saveAgendaMedico(medico1, clinicaGeral, LocalDate.now().plusDays(1), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico1, cardiologia, LocalDate.now().plusDays(2), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico2, clinicaGeral, LocalDate.now().plusDays(1), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico2, cardiologia, LocalDate.now().plusDays(3), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico3, clinicaGeral, LocalDate.now().plusDays(2), STATUS_AGENDA_ATIVA);
+        saveAgendaMedico(medico3, cardiologia, LocalDate.now().plusDays(4), STATUS_AGENDA_ATIVA);
 
         seedHorariosDisponiveisNasAgendas();
     }
@@ -178,21 +180,32 @@ public class DataSeederConfig implements CommandLineRunner {
     }
 
     private Usuario saveUsuario(SeedUserData userData, TipoUsuario tipoUsuario, Perfil perfil, NivelAcesso nivelAcesso) {
-        return usuarioRepository.findByEmail(userData.email())
-                .orElseGet(() -> usuarioRepository.save(
-                        Usuario.builder()
-                                .nome(userData.nome())
-                                .cpf(userData.cpf())
-                                .email(userData.email())
-                                .telefone(userData.telefone())
-                                .senha(passwordEncoder.encode(userData.senha()))
-                                .status(userData.status())
-                                .dataCadastro(LocalDateTime.now())
-                                .tipoUsuario(tipoUsuario)
-                                .perfil(perfil)
-                                .nivelAcesso(nivelAcesso)
-                                .build()
-                ));
+        Usuario usuario = usuarioRepository.findByEmail(userData.email()).orElse(null);
+        if (usuario == null) {
+            usuario = Usuario.builder()
+                    .nome(userData.nome())
+                    .cpf(userData.cpf())
+                    .email(userData.email())
+                    .telefone(userData.telefone())
+                    .senha(passwordEncoder.encode(userData.senha()))
+                    .status(userData.status())
+                    .dataCadastro(LocalDateTime.now())
+                    .tipoUsuario(tipoUsuario)
+                    .perfil(perfil)
+                    .nivelAcesso(nivelAcesso)
+                    .build();
+            return usuarioRepository.save(usuario);
+        }
+
+        usuario.setNome(userData.nome());
+        usuario.setCpf(userData.cpf());
+        usuario.setTelefone(userData.telefone());
+        usuario.setStatus(userData.status());
+        usuario.setTipoUsuario(tipoUsuario);
+        usuario.setPerfil(perfil);
+        usuario.setNivelAcesso(nivelAcesso);
+
+        return usuarioRepository.save(usuario);
     }
 
     private Especialidade saveEspecialidade(String nomeEspecialidade, String descricao) {
