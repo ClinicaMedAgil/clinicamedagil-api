@@ -3,6 +3,10 @@ package br.com.clinicamedagil_backend.demo.repository;
 import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidade;
 import br.com.clinicamedagil_backend.demo.entities.MedicoEspecialidadeId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 /**
  * MedicoEspecialidadeRepository.interface
@@ -17,4 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * </pre>
  */
 public interface MedicoEspecialidadeRepository extends JpaRepository<MedicoEspecialidade, MedicoEspecialidadeId> {
+
+    @Query("SELECT m FROM MedicoEspecialidade m WHERE m.id.idEspecialidade = :especialidadeId")
+    List<MedicoEspecialidade> findByEspecialidadeId(@Param("especialidadeId") Long especialidadeId);
 }

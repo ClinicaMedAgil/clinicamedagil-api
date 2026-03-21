@@ -50,7 +50,14 @@ public class GlobalExcepstionHandler {
 
     @ExceptionHandler(RegistroDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErroResposta handleRegistroDuplicadoException(RegistroDuplicadoException e){
+    public ErroResposta handleRegistroDuplicadoException(RegistroDuplicadoException e) {
+        String campo = e.getCampo();
+        if (campo != null && !campo.isBlank()) {
+            return new ErroResposta(
+                    HttpStatus.CONFLICT.value(),
+                    e.getMessage(),
+                    List.of(new ErroCampo(campo, e.getMessage())));
+        }
         return ErroResposta.conflito(e.getMessage());
     }
 

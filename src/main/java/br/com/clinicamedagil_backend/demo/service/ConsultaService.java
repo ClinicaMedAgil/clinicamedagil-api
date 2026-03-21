@@ -1,14 +1,19 @@
 package br.com.clinicamedagil_backend.demo.service;
 
+import br.com.clinicamedagil_backend.demo.entities.AgendaMedico;
+import br.com.clinicamedagil_backend.demo.entities.Agendamento;
 import br.com.clinicamedagil_backend.demo.entities.Consulta;
+import br.com.clinicamedagil_backend.demo.entities.HorarioAgenda;
 import br.com.clinicamedagil_backend.demo.entities.Usuario;
 import br.com.clinicamedagil_backend.demo.exceptions.CampoInvalidoExeception;
 import br.com.clinicamedagil_backend.demo.exceptions.OperacaoNaoPerminitidaException;
 import br.com.clinicamedagil_backend.demo.repository.AgendamentoRepository;
 import br.com.clinicamedagil_backend.demo.repository.ConsultaRepository;
+import br.com.clinicamedagil_backend.demo.repository.HorarioAgendaRepository;
 import br.com.clinicamedagil_backend.demo.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -36,9 +41,12 @@ public class ConsultaService {
     private static final String ROLE_PACIENTE = "PACIENTE";
     private static final String ROLE_USUARIO = "USUARIO";
     private static final String MSG_USUARIO_SEM_ID = "Usuário autenticado sem identificador.";
+    private static final String STATUS_HORARIO_DISPONIVEL = "DISPONIVEL";
+    private static final String STATUS_HORARIO_RESERVADO = "RESERVADO";
 
     private final ConsultaRepository repository;
     private final AgendamentoRepository agendamentoRepository;
+    private final HorarioAgendaRepository horarioAgendaRepository;
     private final UsuarioRepository usuarioRepository;
 
     public List<Consulta> listarTodos() {
@@ -98,6 +106,7 @@ public class ConsultaService {
         return consulta;
     }
 
+    @Transactional
     public Consulta salvar(Consulta consulta) {
         if (consulta.getAgendamento() == null) {
             throw new CampoInvalidoExeception("agendamento", "O agendamento é obrigatório.");
@@ -111,15 +120,44 @@ public class ConsultaService {
             throw new CampoInvalidoExeception("paciente", "O paciente é obrigatório.");
         }
 
+        Agendamento agendamento = resolveAgendamento(consulta);
+        Usuario medico = resolveMedico(consulta);
+        Usuario paciente = resolvePaciente(consulta);
+
+        HorarioAgenda horario = carregarHorarioDisponivelParaMarcacao(agendamento, medico);
+
         if (consulta.getDataConsulta() == null) {
             consulta.setDataConsulta(LocalDateTime.now());
         }
 
-        consulta.setAgendamento(resolveAgendamento(consulta));
-        consulta.setMedico(resolveMedico(consulta));
-        consulta.setPaciente(resolvePaciente(consulta));
+        consulta.setAgendamento(agendamento);
+        consulta.setMedico(medico);
+        consulta.setPaciente(paciente);
 
-        return repository.save(consulta);
+        Consulta salvo = repository.save(consulta);
+        horario.setStatusHorario(STATUS_HORARIO_RESERVADO);
+        horarioAgendaRepository.save(horario);
+        return salvo;
+    }
+
+    private HorarioAgenda carregarHorarioDisponivelParaMarcacao(Agendamento agendamento, Usuario medico) {
+        if (agendamento.getHorario() == null || agendamento.getHorario().getId() == null) {
+            throw new CampoInvalidoExeception("horario", "Agendamento sem horário associado.");
+        }
+        HorarioAgenda horario = horarioAgendaRepository.findById(agendamento.getHorario().getId())
+                .orElseThrow(() -> new CampoInvalidoExeception("horarioId", "Horário não encontrado."));
+        String status = horario.getStatusHorario();
+        if (status == null || !STATUS_HORARIO_DISPONIVEL.equalsIgnoreCase(status.trim())) {
+            throw new OperacaoNaoPerminitidaException("Este horário não está disponível para marcação.");
+        }
+        AgendaMedico agenda = horario.getAgenda();
+        if (agenda == null || agenda.getMedico() == null || agenda.getMedico().getId() == null) {
+            throw new CampoInvalidoExeception("agenda", "Horário sem agenda ou médico associado.");
+        }
+        if (!agenda.getMedico().getId().equals(medico.getId())) {
+            throw new CampoInvalidoExeception("medicoId", "O médico informado não corresponde ao horário selecionado.");
+        }
+        return horario;
     }
 
     public Consulta salvarComPermissao(Consulta consulta, String email, Collection<String> authorities) {
