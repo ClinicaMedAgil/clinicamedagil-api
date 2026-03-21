@@ -1,103 +1,39 @@
-name: Deploy Backend OCI
-
+name: Deploy Backend
 on:
   push:
-    branches:
-      - "main"
+    branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout do código
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 2. Configuração do QEMU e Buildx (CRUCIAL para gerar imagem ARM em runner Intel)
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # 3. Login no Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. Build e Push Multi-Arquitetura
-      # Aqui o Buildx faz o trabalho pesado de compilar para ARM64
-      - name: Build and Push Docker Image
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          platforms: linux/arm64  # <--- Define a arquitetura do seu servidor OCI
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
+          platforms: linux/arm64
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
 
-      # 5. Deploy na VM OCI via SSH
-      - name: Deploy to OCI via SSH
-        uses: appleboy/ssh-action@v1.0.3
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.OCI_VM_IP_BACK }}
           username: ubuntu
           key: ${{ secrets.OCI_SSH_KEY_BACK }}
           script: |
-            mkdir -p ~/clinicamedagil-api
-            cd ~/clinicamedagil-api
-
-            # Criar/Atualizar o docker-compose.yml completo com Rede e Postgres
-            cat <<EOF > docker-compose.yml
-            services:
-              api:
-                image: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/clinicamedagil-api:latest
-                container_name: backend
-                platform: linux/arm64
-                ports:
-                  - "8080:8080"
-                restart: always
-                depends_on:
-                  postgres:
-                    condition: service_healthy
-                environment:
-                  - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_cliagil
-                  - SPRING_DATASOURCE_USERNAME=postgres
-                  - SPRING_DATASOURCE_PASSWORD=postgres
-                networks:
-                  - clianet
-
-              postgres:
-                image: postgres:16-alpine
-                container_name: clinicamedagil-postgres
-                platform: linux/arm64
-                restart: unless-stopped
-                environment:
-                  POSTGRES_DB: db_cliagil
-                  POSTGRES_USER: postgres
-                  POSTGRES_PASSWORD: postgres
-                ports:
-                  - "5433:5432"
-                volumes:
-                  - postgres_data:/var/lib/postgresql/data
-                healthcheck:
-                  test: ["CMD-SHELL", "pg_isready -U postgres -d db_cliagil"]
-                  interval: 10s
-                  timeout: 5s
-                  retries: 5
-                networks:
-                  - clianet
-
-            volumes:
-              postgres_data:
-
-            networks:
-              clianet:
-                driver: bridge
-            EOF
-
-            # Atualizar e subir os containers
-            sudo docker compose pull
-            sudo docker compose up -d
+            cd ~/cliagil-backend
+            docker compose pull
+            docker compose up -d
