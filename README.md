@@ -10,6 +10,7 @@ API REST do sistema ClinicaMedAgil.
 - PostgreSQL
 - Docker
 - GitHub Actions
+  
 
 ## Responsabilidades da API
 
